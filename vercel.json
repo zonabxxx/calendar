@@ -1,16 +1,19 @@
 {
   "version": 2,
-  "name": "calendar-mcp",
+  "name": "calendar-ai-assistant",
   "builds": [
     {
-      "src": "index.js",
+      "src": "web-server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "index.js"
+      "dest": "web-server.js"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
