@@ -1,19 +1,9 @@
 {
   "version": 2,
-  "name": "calendar-ai-assistant",
-  "builds": [
+  "rewrites": [
     {
-      "src": "web-server.js",
-      "use": "@vercel/node"
+      "source": "/",
+      "destination": "/google-style.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "web-server.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
