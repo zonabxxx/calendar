@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Prihlásenie - Kalendár</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    p {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .connect-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-top: 10px;
+    }
+
+    .connect-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .connect-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .help-text {
+      font-size: 13px;
+      color: #999;
+      margin-top: 6px;
+    }
+
+    .instruction {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+
+    .instruction h3 {
+      color: #333;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .instruction ol {
+      margin-left: 20px;
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .instruction ol li {
+      margin-bottom: 8px;
+    }
+
+    .instruction code {
+      background: #e0e0e0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .error {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .success {
+      background: #efe;
+      border: 1px solid #cfc;
+      color: #363;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .success.show {
+      display: block;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      display: none;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">📅</div>
+    <h1>Pripojiť Google Kalendár</h1>
+    <p>Vložte URL vášho Google Apps Script deploymentu</p>
+
+    <form id="connectForm">
+      <div class="form-group">
+        <label for="scriptUrl">📎 Script URL</label>
+        <input 
+          type="text" 
+          id="scriptUrl" 
+          placeholder="https://script.google.com/macros/s/.../exec"
+          required
+        >
+        <div class="help-text">
+          Celá URL z "Deploy" vrátane <code>/exec</code> na konci
+        </div>
+      </div>
+
+      <button type="submit" class="connect-btn" id="connectBtn">
+        🔗 Pripojiť sa
+      </button>
+    </form>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="color: #666;">Pripájam sa...</p>
+    </div>
+
+    <div class="error" id="error"></div>
+    <div class="success" id="success"></div>
+
+    <div class="instruction">
+      <h3>📝 Ako získať Script URL:</h3>
+      <ol>
+        <li>Ísť na <code>script.google.com</code></li>
+        <li>New project → vložiť kód z <code>GoogleAppsScript-NoAuth.gs</code></li>
+        <li>Deploy → New deployment → Web app</li>
+        <li>Execute as: <strong>Me</strong>, Access: <strong>Anyone</strong></li>
+        <li>Deploy → skopírovať URL</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('connectForm');
+    const scriptUrlInput = document.getElementById('scriptUrl');
+    const connectBtn = document.getElementById('connectBtn');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    const successDiv = document.getElementById('success');
+
+    // Check if already connected
+    const savedUrl = localStorage.getItem('scriptUrl');
+    if (savedUrl) {
+      window.location.href = '/';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const scriptUrl = scriptUrlInput.value.trim();
+      
+      if (!scriptUrl) {
+        showError('Zadajte Script URL');
+        return;
+      }
+
+      if (!scriptUrl.includes('script.google.com')) {
+        showError('Neplatná Script URL. Musí začínať https://script.google.com/...');
+        return;
+      }
+
+      // Test connection
+      connectBtn.disabled = true;
+      loading.classList.add('show');
+      errorDiv.classList.remove('show');
+      successDiv.classList.remove('show');
+
+      try {
+        // Ensure URL ends with /exec
+        let cleanUrl = scriptUrl.trim();
+        if (!cleanUrl.endsWith('/exec')) {
+          cleanUrl += '/exec';
+        }
+        
+        // Test connection - just check if script responds
+        const testUrl = new URL(cleanUrl);
+        
+        const response = await fetch(testUrl.toString());
+        const data = await response.json();
+
+        // Accept any valid JSON response from the script
+        if (data && (data.ok || data.status === 'ok')) {
+          // Success! Save the clean URL
+          localStorage.setItem('scriptUrl', cleanUrl);
+          
+          // Try to get user email
+          const testUrl2 = new URL(cleanUrl);
+          testUrl2.searchParams.append('action', 'getCalendars');
+          try {
+            const resp2 = await fetch(testUrl2.toString());
+            const data2 = await resp2.json();
+            if (data2.user) {
+              localStorage.setItem('userEmail', data2.user);
+            }
+          } catch (e) {
+            // Ignore, just use default
+          }
+          
+          const userEmail = localStorage.getItem('userEmail') || 'Pripojený';
+          successDiv.textContent = `✅ Pripojené! ${userEmail}`;
+          successDiv.classList.add('show');
+          
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1500);
+        } else {
+          throw new Error('Neplatná odpoveď zo scriptu');
+        }
+      } catch (error) {
+        showError(`Chyba pripojenia: ${error.message}`);
+        connectBtn.disabled = false;
+      } finally {
+        loading.classList.remove('show');
+      }
+    });
+
+    function showError(message) {
+      errorDiv.textContent = '❌ ' + message;
+      errorDiv.classList.add('show');
+    }
+
+    // Auto-fill if URL in query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlFromQuery = urlParams.get('url');
+    if (urlFromQuery) {
+      scriptUrlInput.value = urlFromQuery;
+    }
+  </script>
+</body>
+</html>
+

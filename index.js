@@ -12,6 +12,26 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4EKi35D4Tuo
 app.use(cors());
 app.use(express.json());
 
+// Optional simple API key check (for ChatGPT Kit)
+const API_KEY = process.env.API_KEY || 'calendar-mcp-2025';
+app.use((req, res, next) => {
+  // Skip auth for health check
+  if (req.path === '/') {
+    return next();
+  }
+  
+  // Check for API key in header or query
+  const providedKey = req.headers['authorization']?.replace('Bearer ', '') || 
+                      req.query.api_key;
+  
+  // Allow requests without key (for compatibility)
+  if (!providedKey || providedKey === API_KEY) {
+    return next();
+  }
+  
+  res.status(401).json({ error: 'Invalid API key' });
+});
+
 // MCP Server Info
 const MCP_SERVER_INFO = {
   name: 'google-calendar-mcp',
@@ -33,10 +53,39 @@ app.get('/', (req, res) => {
   });
 });
 
+// MCP SSE endpoint for real-time communication
+app.get('/sse', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // Send initial message
+  res.write(`data: ${JSON.stringify({
+    jsonrpc: '2.0',
+    method: 'notifications/initialized',
+    params: {
+      protocolVersion: '2024-11-05',
+      serverInfo: MCP_SERVER_INFO,
+      capabilities: MCP_SERVER_INFO.capabilities
+    }
+  })}\n\n`);
+
+  // Keep connection alive
+  const keepAlive = setInterval(() => {
+    res.write(': keepalive\n\n');
+  }, 30000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    res.end();
+  });
+});
+
 // MCP Protocol endpoint - Initialize
 app.post('/mcp/initialize', (req, res) => {
   res.json({
-    protocolVersion: '0.1.0',
+    protocolVersion: '2024-11-05',
     serverInfo: MCP_SERVER_INFO,
     capabilities: MCP_SERVER_INFO.capabilities
   });

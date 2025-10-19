@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Kalendár</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #ff4757;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #ee3344;
+    }
+
+    .main-content {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .view-toggle button {
+      padding: 10px 20px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .view-toggle button.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+
+    .view-toggle button:hover:not(.active) {
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    /* LIST VIEW */
+    .event-item {
+      padding: 20px;
+      border-left: 4px solid #667eea;
+      background: #f9f9f9;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .event-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .event-date {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .event-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .event-details {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .calendar-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+    }
+
+    /* CALENDAR VIEW */
+    .calendar-grid {
+      display: none;
+    }
+
+    .calendar-grid.active {
+      display: block;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .calendar-header h2 {
+      font-size: 24px;
+      color: #333;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 10px;
+    }
+
+    .calendar-nav button {
+      padding: 8px 16px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .calendar-nav button:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
+      gap: 2px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .week-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      font-weight: 600;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .time-label {
+      background: #f9f9f9;
+      padding: 10px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .calendar-cell {
+      background: white;
+      padding: 10px;
+      min-height: 80px;
+      position: relative;
+    }
+
+    .calendar-event {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-event:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .calendar-event.meeting {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .calendar-event.deadline {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .calendar-event.personal {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .calendar-event.work {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+      font-size: 18px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+    }
+
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    /* Event Detail Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .modal-header h3 {
+      font-size: 24px;
+      color: #333;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: #888;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .modal-close:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .modal-body {
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .modal-body .detail-row {
+      margin-bottom: 15px;
+    }
+
+    .modal-body .detail-label {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 5px;
+    }
+
+    .modal-body .detail-value {
+      color: #333;
+    }
+
+    .modal-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f0f0;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .week-grid {
+        grid-template-columns: 60px repeat(7, 1fr);
+        font-size: 12px;
+      }
+
+      .calendar-cell {
+        min-height: 60px;
+        padding: 5px;
+      }
+
+      .calendar-event {
+        font-size: 10px;
+        padding: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📅 Kalendár</h1>
+      <div class="header-actions">
+        <div class="user-info">
+          <span id="userEmail">Načítavam...</span>
+        </div>
+        <button class="btn btn-secondary" onclick="disconnectCalendar()">🚪 Odpojiť</button>
+        <button class="btn btn-primary" onclick="refreshEvents()">🔄 Obnoviť</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- View Toggle -->
+      <div class="view-toggle">
+        <button id="listViewBtn" class="active" onclick="switchView('list')">📋 Zoznam</button>
+        <button id="calendarViewBtn" onclick="switchView('calendar')">📅 Kalendár</button>
+        <button id="weekViewBtn" onclick="switchView('week')">🗓️ Týždeň</button>
+      </div>
+
+      <!-- List View -->
+      <div id="listView" class="events-list"></div>
+
+      <!-- Calendar View -->
+      <div id="calendarView" class="calendar-grid"></div>
+    </div>
+  </div>
+
+  <!-- Event Detail Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle"></h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" onclick="deleteEvent()">🗑️ Zmazať</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Zavrieť</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check if connected
+    const scriptUrl = localStorage.getItem('scriptUrl');
+    if (!scriptUrl) {
+      window.location.href = '/connect.html';
+    }
+
+    let currentView = 'list';
+    let allEvents = [];
+    let selectedEvent = null;
+    let isLoadingEvents = false;
+
+    // Load user info
+    async function loadUserInfo() {
+      try {
+        const url = new URL(scriptUrl);
+        url.searchParams.append('action', 'getCalendars');
+        
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        
+        if (data.user) {
+          document.getElementById('userEmail').textContent = data.user;
+          localStorage.setItem('userEmail', data.user);
+        }
+      } catch (error) {
+        console.error('Error loading user info:', error);
+        document.getElementById('userEmail').textContent = 'Pripojený';
+      }
+    }
+
+    // Load events
+    async function loadEvents(showLoading = true) {
+      if (isLoadingEvents) return;
+      isLoadingEvents = true;
+
+      if (showLoading) {
+        document.getElementById('listView').innerHTML = '<div class="loading">Načítavam udalosti...</div>';
+      }
+      
+      try {
+        const url = new URL(scriptUrl);
+        url.searchParams.append('action', 'getEvents');
+        url.searchParams.append('allCalendars', 'true');
+        url.searchParams.append('maxResults', '100');
+        url.searchParams.append('daysAhead', '30');
+        
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        
+        if (data.ok && data.events) {
+          allEvents = data.events;
+          renderView();
+        } else {
+          throw new Error(data.error || 'Nepodarilo sa načítať udalosti');
+        }
+      } catch (error) {
+        console.error('Error loading events:', error);
+        document.getElementById('listView').innerHTML = `
+          <div class="empty-state">
+            <div class="icon">⚠️</div>
+            <p>Chyba pri načítaní udalostí</p>
+            <p style="font-size: 14px; color: #999; margin-top: 10px;">${error.message}</p>
+          </div>
+        `;
+      } finally {
+        isLoadingEvents = false;
+      }
+    }
+
+    // Render current view
+    function renderView() {
+      if (currentView === 'list') {
+        renderListView();
+      } else if (currentView === 'calendar') {
+        renderMonthView();
+      } else if (currentView === 'week') {
+        renderWeekView();
+      }
+    }
+
+    // Render list view
+    function renderListView() {
+      const listView = document.getElementById('listView');
+      
+      if (allEvents.length === 0) {
+        listView.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📅</div>
+            <p>Žiadne udalosti</p>
+            <p style="font-size: 14px; color: #999; margin-top: 10px;">Vaše nadchádzajúce udalosti sa zobrazia tu</p>
+          </div>
+        `;
+        return;
+      }
+
+      listView.innerHTML = allEvents.map(event => {
+        const startDate = new Date(event.start.dateTime);
+        const endDate = new Date(event.end.dateTime);
+        
+        const dateStr = startDate.toLocaleDateString('sk-SK', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        const timeStr = `${startDate.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}`;
+        
+        const eventType = detectEventType(event);
+        const borderColor = getEventColor(eventType);
+        
+        return `
+          <div class="event-item" style="border-left-color: ${borderColor}" onclick="showEventDetail(${JSON.stringify(event).replace(/"/g, '&quot;')})">
+            <div class="event-date">📅 ${dateStr}</div>
+            <div class="event-title">${event.summary}</div>
+            <div class="event-details">⏰ ${timeStr}</div>
+            ${event.location ? `<div class="event-details">📍 ${event.location}</div>` : ''}
+            ${event.attendees && event.attendees.length > 0 ? `<div class="event-details">👥 ${event.attendees.length} účastníkov</div>` : ''}
+            <span class="calendar-badge" style="background-color: ${borderColor}20; color: ${borderColor}">${event.calendarName}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render week view
+    function renderWeekView() {
+      const calendarView = document.getElementById('calendarView');
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        days.push(day);
+      }
+
+      const hours = Array.from({ length: 24 }, (_, i) => i);
+
+      let html = `
+        <div class="calendar-header">
+          <h2>Týždeň ${startOfWeek.toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' })}</h2>
+          <div class="calendar-nav">
+            <button onclick="previousWeek()">◀ Predošlý</button>
+            <button onclick="currentWeek()">Dnes</button>
+            <button onclick="nextWeek()">Ďalší ▶</button>
+          </div>
+        </div>
+        <div class="week-grid">
+          <div class="week-header"></div>
+      `;
+
+      days.forEach(day => {
+        const isToday = day.toDateString() === today.toDateString();
+        html += `<div class="week-header" style="${isToday ? 'background: #f093fb;' : ''}">${day.toLocaleDateString('sk-SK', { weekday: 'short', day: 'numeric', month: 'short' })}</div>`;
+      });
+
+      hours.forEach(hour => {
+        html += `<div class="time-label">${hour.toString().padStart(2, '0')}:00</div>`;
+        
+        days.forEach(day => {
+          const dayEvents = allEvents.filter(event => {
+            const eventDate = new Date(event.start.dateTime);
+            return eventDate.toDateString() === day.toDateString() && eventDate.getHours() === hour;
+          });
+
+          html += `<div class="calendar-cell">`;
+          dayEvents.forEach(event => {
+            const eventType = detectEventType(event);
+            html += `<div class="calendar-event ${eventType}" onclick="showEventDetail(${JSON.stringify(event).replace(/"/g, '&quot;')})">${event.summary}</div>`;
+          });
+          html += `</div>`;
+        });
+      });
+
+      html += `</div>`;
+      calendarView.innerHTML = html;
+    }
+
+    // Render month view (simplified)
+    function renderMonthView() {
+      const calendarView = document.getElementById('calendarView');
+      calendarView.innerHTML = '<div class="loading">Mesačný pohľad - pripravuje sa...</div>';
+    }
+
+    // Detect event type
+    function detectEventType(event) {
+      const title = event.summary.toLowerCase();
+      const desc = (event.description || '').toLowerCase();
+      
+      if (title.includes('meeting') || title.includes('stretnutie') || title.includes('call')) return 'meeting';
+      if (title.includes('deadline') || title.includes('termín')) return 'deadline';
+      if (title.includes('personal') || title.includes('osobné')) return 'personal';
+      if (title.includes('work') || title.includes('práca')) return 'work';
+      
+      return 'meeting';
+    }
+
+    // Get event color
+    function getEventColor(type) {
+      const colors = {
+        meeting: '#667eea',
+        deadline: '#f5576c',
+        personal: '#00f2fe',
+        work: '#38f9d7'
+      };
+      return colors[type] || '#667eea';
+    }
+
+    // Switch view
+    function switchView(view) {
+      currentView = view;
+      
+      document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+      document.getElementById('calendarViewBtn').classList.toggle('active', view === 'calendar');
+      document.getElementById('weekViewBtn').classList.toggle('active', view === 'week');
+      
+      document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('calendarView').style.display = view !== 'list' ? 'block' : 'none';
+      
+      renderView();
+    }
+
+    // Show event detail
+    function showEventDetail(event) {
+      selectedEvent = event;
+      
+      const startDate = new Date(event.start.dateTime);
+      const endDate = new Date(event.end.dateTime);
+      
+      document.getElementById('modalTitle').textContent = event.summary;
+      document.getElementById('modalBody').innerHTML = `
+        <div class="detail-row">
+          <div class="detail-label">📅 Dátum</div>
+          <div class="detail-value">${startDate.toLocaleDateString('sk-SK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">⏰ Čas</div>
+          <div class="detail-value">${startDate.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+        ${event.location ? `
+          <div class="detail-row">
+            <div class="detail-label">📍 Miesto</div>
+            <div class="detail-value">${event.location}</div>
+          </div>
+        ` : ''}
+        ${event.description ? `
+          <div class="detail-row">
+            <div class="detail-label">📝 Popis</div>
+            <div class="detail-value">${event.description}</div>
+          </div>
+        ` : ''}
+        ${event.attendees && event.attendees.length > 0 ? `
+          <div class="detail-row">
+            <div class="detail-label">👥 Účastníci</div>
+            <div class="detail-value">${event.attendees.map(a => a.name || a.email).join(', ')}</div>
+          </div>
+        ` : ''}
+        <div class="detail-row">
+          <div class="detail-label">📆 Kalendár</div>
+          <div class="detail-value">${event.calendarName}</div>
+        </div>
+        ${event.creator ? `
+          <div class="detail-row">
+            <div class="detail-label">👤 Vytvoril</div>
+            <div class="detail-value">${event.creator}</div>
+          </div>
+        ` : ''}
+      `;
+      
+      document.getElementById('eventModal').classList.add('active');
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('eventModal').classList.remove('active');
+      selectedEvent = null;
+    }
+
+    // Delete event
+    async function deleteEvent() {
+      if (!selectedEvent) return;
+      
+      if (!confirm(`Naozaj chcete zmazať udalosť "${selectedEvent.summary}"?`)) {
+        return;
+      }
+      
+      try {
+        const url = new URL(scriptUrl);
+        url.searchParams.append('action', 'deleteEvent');
+        url.searchParams.append('eventId', selectedEvent.id);
+        url.searchParams.append('calendarId', selectedEvent.calendarId);
+        
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        
+        if (data.ok) {
+          closeModal();
+          refreshEvents();
+          alert('✅ Udalosť bola zmazaná');
+        } else {
+          throw new Error(data.error || 'Nepodarilo sa zmazať udalosť');
+        }
+      } catch (error) {
+        alert('❌ Chyba: ' + error.message);
+      }
+    }
+
+    // Disconnect calendar
+    function disconnectCalendar() {
+      if (confirm('Naozaj chcete odpojiť kalendár?')) {
+        localStorage.removeItem('scriptUrl');
+        localStorage.removeItem('userEmail');
+        window.location.href = '/connect.html';
+      }
+    }
+
+    // Refresh events
+    function refreshEvents() {
+      loadEvents(true);
+    }
+
+    // Week navigation (placeholders)
+    function previousWeek() {
+      alert('Predošlý týždeň - pripravuje sa...');
+    }
+
+    function currentWeek() {
+      loadEvents(true);
+    }
+
+    function nextWeek() {
+      alert('Ďalší týždeň - pripravuje sa...');
+    }
+
+    // Close modal on outside click
+    document.getElementById('eventModal').addEventListener('click', (e) => {
+      if (e.target.id === 'eventModal') {
+        closeModal();
+      }
+    });
+
+    // Initial load
+    loadUserInfo();
+    loadEvents();
+
+    // Auto-refresh every 5 minutes
+    setInterval(() => {
+      loadEvents(false);
+    }, 5 * 60 * 1000);
+  </script>
+</body>
+</html>

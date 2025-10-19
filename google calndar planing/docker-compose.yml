@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Production Planner API
+  api:
+    build: .
+    container_name: production_planner_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/production_planner.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+      - WEATHER_LOCATION=${WEATHER_LOCATION:-Bratislava,SK}
+    volumes:
+      - ./data:/app/data
+      - ./credentials.json:/app/credentials.json:ro
+      - ./token.pickle:/app/token.pickle
+    restart: unless-stopped
+    networks:
+      - planner_network
+
+  # Nginx for serving frontend
+  frontend:
+    image: nginx:alpine
+    container_name: production_planner_frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - planner_network
+
+  # Optional: PostgreSQL database (instead of SQLite)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: production_planner_db
+  #   environment:
+  #     - POSTGRES_DB=production_planner
+  #     - POSTGRES_USER=planner
+  #     - POSTGRES_PASSWORD=planner_password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+  #   networks:
+  #     - planner_network
+
+networks:
+  planner_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+

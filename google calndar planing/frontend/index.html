@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Planner - AI Asistent</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🗓️ Production Planner</h1>
+            <p>Inteligentný plánovací systém pre výrobu a inštalácie</p>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Sidebar - Weather & Stats -->
+            <aside class="sidebar left">
+                <div class="card weather-card">
+                    <h2>☀️ Počasie</h2>
+                    <div id="current-weather">
+                        <p class="loading">Načítavam...</p>
+                    </div>
+                    <div id="weather-forecast">
+                        <!-- Forecast items -->
+                    </div>
+                </div>
+
+                <div class="card stats-card">
+                    <h2>📊 Štatistiky</h2>
+                    <div id="stats">
+                        <p class="loading">Načítavam...</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content - Chat -->
+            <main class="main-content">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <h2>💬 AI Asistent</h2>
+                        <span class="status online">Online</span>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message bot">
+                            <div class="message-content">
+                                <p>Ahoj! Som váš AI plánovací asistent. 👋</p>
+                                <p>Môžem vám pomôcť s:</p>
+                                <ul>
+                                    <li>Plánovaním úloh pre zamestnancov</li>
+                                    <li>Kontrolou dostupnosti v kalendári</li>
+                                    <li>Odporúčaním termínov podľa počasia</li>
+                                    <li>Prehľadom naplánovaných úloh</li>
+                                </ul>
+                                <p>Skúste napríklad: "Pridaj úlohu inštalácia pre Jána na zajtra"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            placeholder="Napíšte správu..."
+                            autocomplete="off"
+                        >
+                        <button id="send-button" class="btn-primary">
+                            <span>Odoslať</span>
+                        </button>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar - Tasks & Employees -->
+            <aside class="sidebar right">
+                <div class="card tasks-card">
+                    <h2>✅ Úlohy</h2>
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="upcoming">Nadchádzajúce</button>
+                        <button class="tab-btn" data-tab="all">Všetky</button>
+                    </div>
+                    <div id="tasks-list">
+                        <p class="loading">Načítavam...</p>
+                    </div>
+                </div>
+
+                <div class="card employees-card">
+                    <h2>👥 Zamestnanci</h2>
+                    <div id="employees-list">
+                        <p class="loading">Načítavam...</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="btn-action" onclick="showNewTaskModal()">➕ Nová úloha</button>
+            <button class="btn-action" onclick="showNewEmployeeModal()">👤 Nový zamestnanec</button>
+            <button class="btn-action" onclick="refreshAll()">🔄 Obnoviť</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('task-modal')">&times;</span>
+            <h2>Nová úloha</h2>
+            <form id="task-form">
+                <div class="form-group">
+                    <label>Názov úlohy</label>
+                    <input type="text" id="task-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Typ úlohy</label>
+                    <select id="task-type" required>
+                        <option value="installation">Inštalácia</option>
+                        <option value="production">Výroba</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Začiatok</label>
+                    <input type="datetime-local" id="task-start" required>
+                </div>
+                <div class="form-group">
+                    <label>Trvanie (hodiny)</label>
+                    <input type="number" id="task-hours" value="8" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Popis</label>
+                    <textarea id="task-description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Zamestnanec</label>
+                    <select id="task-employee">
+                        <option value="">Automaticky priradiť</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Vytvoriť</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="employee-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('employee-modal')">&times;</span>
+            <h2>Nový zamestnanec</h2>
+            <form id="employee-form">
+                <div class="form-group">
+                    <label>Meno</label>
+                    <input type="text" id="employee-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="employee-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="employee-type" required>
+                        <option value="installer">Inštalátor</option>
+                        <option value="producer">Výrobca</option>
+                        <option value="both">Oboje</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max. hodín týždenne</label>
+                    <input type="number" id="employee-hours" value="40" min="1" required>
+                </div>
+                <button type="submit" class="btn-primary">Vytvoriť</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
+

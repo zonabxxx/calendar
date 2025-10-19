@@ -1,0 +1,38 @@
+{
+  "name": "production-planner",
+  "version": "1.0.0",
+  "description": "AI Production & Installation Planner - Inteligentný systém na plánovanie výroby a inštalácií",
+  "scripts": {
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "frontend": "npx http-server frontend -p 3000 -o -c-1",
+    "start": "npm run dev",
+    "build": "echo 'Production build ready'",
+    "test": "python tests/test_basic.py",
+    "setup": "python test_setup.py",
+    "generate-data": "python utils/generate_sample_data.py",
+    "db-utils": "python utils/db_utils.py",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "production",
+    "planning",
+    "ai",
+    "calendar",
+    "weather",
+    "scheduling"
+  ],
+  "author": "Production Planner Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}
+

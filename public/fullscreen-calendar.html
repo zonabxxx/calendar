@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Fullscreen Kalendár</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      background: #2a2a2a;
+      padding: 15px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #404040;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .calendar-selector {
+      padding: 10px 20px;
+      background: #3a3a3a;
+      border: 1px solid #555;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      min-width: 250px;
+    }
+
+    .calendar-selector:hover {
+      background: #4a4a4a;
+    }
+
+    .view-mode-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .view-btn {
+      padding: 8px 16px;
+      background: #3a3a3a;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .view-btn.active {
+      background: #667eea;
+      border-color: #667eea;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      background: #3a3a3a;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .nav-btn:hover {
+      background: #4a4a4a;
+    }
+
+    .current-period {
+      font-size: 20px;
+      font-weight: 600;
+      min-width: 250px;
+      text-align: center;
+    }
+
+    .top-bar-right {
+      display: flex;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      padding: 10px;
+      background: #3a3a3a;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .icon-btn:hover {
+      background: #4a4a4a;
+    }
+
+    /* Main Calendar */
+    .calendar-view {
+      height: calc(100vh - 70px);
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Week View */
+    .week-grid {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      gap: 2px;
+      background: #333;
+      border: 1px solid #333;
+    }
+
+    .time-label {
+      background: #2a2a2a;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      border-right: 2px solid #444;
+    }
+
+    .day-column {
+      background: #2a2a2a;
+      min-height: 60px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .day-column:hover {
+      background: #3a3a3a;
+    }
+
+    .day-header {
+      background: #2a2a2a;
+      padding: 15px;
+      text-align: center;
+      font-weight: 600;
+      border-bottom: 2px solid #444;
+    }
+
+    .day-header.today {
+      color: #667eea;
+    }
+
+    .event-block {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      overflow: hidden;
+      border-left: 3px solid;
+      background: rgba(102, 126, 234, 0.9);
+      color: #fff;
+    }
+
+    .event-block:hover {
+      opacity: 0.8;
+    }
+
+    /* Month View */
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background: #333;
+      border: 1px solid #333;
+      height: calc(100vh - 150px);
+    }
+
+    .month-day {
+      background: #2a2a2a;
+      padding: 10px;
+      min-height: 120px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .month-day:hover {
+      background: #3a3a3a;
+    }
+
+    .month-day.other-month {
+      background: #1a1a1a;
+      color: #666;
+    }
+
+    .month-day.weekend {
+      background: #252525;
+    }
+
+    .month-day-number {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .month-day-number.today {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      text-align: center;
+      background: #667eea;
+      border-radius: 50%;
+    }
+
+    .month-event {
+      padding: 2px 6px;
+      margin-bottom: 2px;
+      border-radius: 3px;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: rgba(102, 126, 234, 0.9);
+      cursor: pointer;
+    }
+
+    .month-event:hover {
+      opacity: 0.8;
+    }
+
+    /* Event Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #ccc;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px;
+      background: #1a1a1a;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-secondary {
+      background: #3a3a3a;
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: #4a4a4a;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 60px;
+      font-size: 18px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <select class="calendar-selector" id="calendarSelector" onchange="changeCalendar()">
+        <option value="">Načítavam kalendáre...</option>
+      </select>
+      
+      <div class="view-mode-btns">
+        <button class="view-btn active" onclick="setViewMode('week')">Týždeň</button>
+        <button class="view-btn" onclick="setViewMode('month')">Mesiac</button>
+        <button class="view-btn" onclick="setViewMode('day')">Deň</button>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <button class="nav-btn" onclick="previousPeriod()">‹ Predošlý</button>
+      <div class="current-period" id="currentPeriod"></div>
+      <button class="nav-btn" onclick="nextPeriod()">Ďalší ›</button>
+      <button class="nav-btn" onclick="goToToday()">Dnes</button>
+    </div>
+
+    <div class="top-bar-right">
+      <button class="icon-btn" onclick="showCreateModal()" title="Vytvoriť udalosť">➕</button>
+      <button class="icon-btn" onclick="refreshEvents()" title="Obnoviť">🔄</button>
+      <button class="icon-btn" onclick="window.location.href='/'" title="Späť na hlavnú">🏠</button>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div class="calendar-view" id="calendarView">
+    <div class="loading">Načítavam...</div>
+  </div>
+
+  <!-- Event Modal -->
+  <div class="modal" id="eventModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Nová udalosť</div>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Názov</label>
+        <input type="text" class="form-input" id="eventTitle" placeholder="Názov udalosti">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Začiatok</label>
+        <input type="datetime-local" class="form-input" id="eventStart">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Koniec</label>
+        <input type="datetime-local" class="form-input" id="eventEnd">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Popis</label>
+        <textarea class="form-input" id="eventDescription" rows="3" placeholder="Popis udalosti"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Miesto</label>
+        <input type="text" class="form-input" id="eventLocation" placeholder="Miesto">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="saveEvent()">💾 Uložiť</button>
+        <button class="btn btn-danger" id="deleteBtn" style="display: none;" onclick="deleteEvent()">🗑️ Zmazať</button>
+        <button class="btn btn-secondary" onclick="closeModal()">✕ Zrušiť</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const scriptUrl = localStorage.getItem('scriptUrl');
+    if (!scriptUrl) {
+      window.location.href = '/connect.html';
+    }
+
+    let calendars = [];
+    let currentCalendarId = null;
+    let events = [];
+    let currentDate = new Date();
+    let viewMode = 'week';
+    let editingEvent = null;
+
+    // Initialize
+    async function init() {
+      await loadCalendars();
+      await loadEvents();
+      render();
+    }
+
+    // Load calendars
+    async function loadCalendars() {
+      try {
+        const url = new URL(scriptUrl);
+        url.searchParams.append('action', 'getCalendars');
+        
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        
+        if (data.ok && data.calendars) {
+          calendars = data.calendars;
+          
+          const selector = document.getElementById('calendarSelector');
+          selector.innerHTML = calendars.map(cal => 
+            `<option value="${cal.id}">${cal.name}</option>`
+          ).join('');
+          
+          if (calendars.length > 0) {
+            currentCalendarId = calendars[0].id;
+            selector.value = currentCalendarId;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading calendars:', error);
+      }
+    }
+
+    // Load events
+    async function loadEvents() {
+      if (!currentCalendarId) return;
+      
+      try {
+        const url = new URL(scriptUrl);
+        url.searchParams.append('action', 'getEvents');
+        url.searchParams.append('calendarId', currentCalendarId);
+        url.searchParams.append('maxResults', '200');
+        url.searchParams.append('daysAhead', '60');
+        
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        
+        if (data.ok && data.events) {
+          events = data.events;
+        }
+      } catch (error) {
+        console.error('Error loading events:', error);
+      }
+    }
+
+    // Change calendar
+    async function changeCalendar() {
+      const selector = document.getElementById('calendarSelector');
+      currentCalendarId = selector.value;
+      await loadEvents();
+      render();
+    }
+
+    // Refresh
+    async function refreshEvents() {
+      await loadEvents();
+      render();
+    }
+
+    // Set view mode
+    function setViewMode(mode) {
+      viewMode = mode;
+      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      render();
+    }
+
+    // Navigation
+    function goToToday() {
+      currentDate = new Date();
+      render();
+    }
+
+    function previousPeriod() {
+      if (viewMode === 'week') {
+        currentDate.setDate(currentDate.getDate() - 7);
+      } else if (viewMode === 'month') {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+      } else {
+        currentDate.setDate(currentDate.getDate() - 1);
+      }
+      render();
+    }
+
+    function nextPeriod() {
+      if (viewMode === 'week') {
+        currentDate.setDate(currentDate.getDate() + 7);
+      } else if (viewMode === 'month') {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      } else {
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      render();
+    }
+
+    // Render
+    function render() {
+      if (viewMode === 'week') {
+        renderWeekView();
+      } else if (viewMode === 'month') {
+        renderMonthView();
+      } else {
+        renderDayView();
+      }
+    }
+
+    // Render week view
+    function renderWeekView() {
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+      
+      document.getElementById('currentPeriod').textContent = 
+        `${startOfWeek.toLocaleDateString('sk-SK', {day: 'numeric', month: 'short'})} - ${new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('sk-SK', {day: 'numeric', month: 'short', year: 'numeric'})}`;
+      
+      let html = '<div class="week-grid">';
+      
+      // Empty corner
+      html += '<div class="time-label"></div>';
+      
+      // Day headers
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + d);
+        day.setHours(0, 0, 0, 0);
+        
+        const isToday = day.getTime() === today.getTime();
+        
+        html += `<div class="day-header ${isToday ? 'today' : ''}">
+          ${day.toLocaleDateString('sk-SK', {weekday: 'short', day: 'numeric'})}
+        </div>`;
+      }
+      
+      // Time rows (8:00 - 17:00)
+      for (let hour = 8; hour <= 17; hour++) {
+        html += `<div class="time-label">${hour}:00</div>`;
+        
+        for (let d = 0; d < 7; d++) {
+          const day = new Date(startOfWeek);
+          day.setDate(startOfWeek.getDate() + d);
+          
+          html += `<div class="day-column" onclick="createEventAt('${day.toISOString()}', ${hour})"></div>`;
+        }
+      }
+      
+      html += '</div>';
+      
+      document.getElementById('calendarView').innerHTML = html;
+      
+      // Add events (simplified - would need proper positioning)
+      // This is a basic implementation
+    }
+
+    // Render month view
+    function renderMonthView() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      document.getElementById('currentPeriod').textContent = 
+        currentDate.toLocaleDateString('sk-SK', {month: 'long', year: 'numeric'});
+      
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      let startDay = firstDay.getDay();
+      if (startDay === 0) startDay = 7;
+      startDay -= 1;
+      
+      let html = '<div class="month-grid">';
+      
+      // Day headers
+      ['Pon', 'Uto', 'Str', 'Štv', 'Pia', 'Sob', 'Ned'].forEach(day => {
+        html += `<div class="day-header">${day}</div>`;
+      });
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Previous month days
+      const prevLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDay - 1; i >= 0; i--) {
+        const day = prevLastDay - i;
+        html += `<div class="month-day other-month"><div class="month-day-number">${day}</div></div>`;
+      }
+      
+      // Current month days
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        date.setHours(0, 0, 0, 0);
+        
+        const isToday = date.getTime() === today.getTime();
+        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        
+        html += `<div class="month-day ${isWeekend ? 'weekend' : ''}" onclick="createEventAt('${date.toISOString()}', 9)">`;
+        html += `<div class="month-day-number ${isToday ? 'today' : ''}">${day}</div>`;
+        
+        // Add events for this day
+        const dayEvents = events.filter(event => {
+          const eventDate = new Date(event.start.dateTime || event.start.date);
+          eventDate.setHours(0, 0, 0, 0);
+          return eventDate.getTime() === date.getTime();
+        });
+        
+        dayEvents.slice(0, 3).forEach(event => {
+          html += `<div class="month-event" onclick="event.stopPropagation(); editEvent('${event.id}')">${event.summary || event.title}</div>`;
+        });
+        
+        if (dayEvents.length > 3) {
+          html += `<div style="font-size: 10px; color: #999; margin-top: 2px;">+${dayEvents.length - 3}</div>`;
+        }
+        
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      
+      document.getElementById('calendarView').innerHTML = html;
+    }
+
+    // Day view (simplified)
+    function renderDayView() {
+      // Similar to week view but for one day
+      renderWeekView();
+    }
+
+    // Create event at specific time
+    function createEventAt(dateStr, hour) {
+      const date = new Date(dateStr);
+      date.setHours(hour, 0, 0, 0);
+      
+      document.getElementById('eventStart').value = formatDateTimeLocal(date);
+      
+      const endDate = new Date(date);
+      endDate.setHours(hour + 1, 0, 0, 0);
+      document.getElementById('eventEnd').value = formatDateTimeLocal(endDate);
+      
+      showCreateModal();
+    }
+
+    // Show create modal
+    function showCreateModal() {
+      editingEvent = null;
+      document.getElementById('modalTitle').textContent = 'Nová udalosť';
+      document.getElementById('eventTitle').value = '';
+      document.getElementById('eventDescription').value = '';
+      document.getElementById('eventLocation').value = '';
+      document.getElementById('deleteBtn').style.display = 'none';
+      
+      if (!document.getElementById('eventStart').value) {
+        const now = new Date();
+        now.setMinutes(0, 0, 0);
+        document.getElementById('eventStart').value = formatDateTimeLocal(now);
+        
+        const end = new Date(now);
+        end.setHours(now.getHours() + 1);
+        document.getElementById('eventEnd').value = formatDateTimeLocal(end);
+      }
+      
+      document.getElementById('eventModal').classList.add('show');
+    }
+
+    // Edit event
+    function editEvent(eventId) {
+      const event = events.find(e => e.id === eventId);
+      if (!event) return;
+      
+      editingEvent = event;
+      document.getElementById('modalTitle').textContent = 'Upraviť udalosť';
+      document.getElementById('eventTitle').value = event.summary || '';
+      document.getElementById('eventDescription').value = event.description || '';
+      document.getElementById('eventLocation').value = event.location || '';
+      document.getElementById('eventStart').value = formatDateTimeLocal(new Date(event.start.dateTime || event.start.date));
+      document.getElementById('eventEnd').value = formatDateTimeLocal(new Date(event.end.dateTime || event.end.date));
+      document.getElementById('deleteBtn').style.display = 'block';
+      
+      document.getElementById('eventModal').classList.add('show');
+    }
+
+    // Save event
+    async function saveEvent() {
+      const title = document.getElementById('eventTitle').value;
+      const start = document.getElementById('eventStart').value;
+      const end = document.getElementById('eventEnd').value;
+      const description = document.getElementById('eventDescription').value;
+      const location = document.getElementById('eventLocation').value;
+      
+      if (!title || !start || !end) {
+        alert('Vyplňte názov, začiatok a koniec!');
+        return;
+      }
+      
+      try {
+        const eventData = {
+          calendarId: currentCalendarId,
+          summary: title,
+          description: description,
+          start: { dateTime: new Date(start).toISOString() },
+          end: { dateTime: new Date(end).toISOString() },
+          location: location
+        };
+        
+        const response = await fetch('/api/create-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(eventData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.ok) {
+          alert('✅ Udalosť bola vytvorená!');
+          closeModal();
+          await refreshEvents();
+        } else {
+          alert('❌ Chyba: ' + (result.error || 'Neznáma chyba'));
+        }
+      } catch (error) {
+        alert('❌ Chyba: ' + error.message);
+      }
+    }
+
+    // Delete event
+    async function deleteEvent() {
+      if (!editingEvent || !confirm('Naozaj chcete zmazať túto udalosť?')) return;
+      
+      try {
+        const url = new URL(scriptUrl);
+        url.searchParams.append('action', 'deleteEvent');
+        url.searchParams.append('calendarId', currentCalendarId);
+        url.searchParams.append('eventId', editingEvent.id);
+        
+        const response = await fetch(url.toString());
+        const result = await response.json();
+        
+        if (result.ok) {
+          alert('✅ Udalosť bola zmazaná!');
+          closeModal();
+          await refreshEvents();
+        } else {
+          alert('❌ Chyba: ' + (result.error || 'Neznáma chyba'));
+        }
+      } catch (error) {
+        alert('❌ Chyba: ' + error.message);
+      }
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('eventModal').classList.remove('show');
+    }
+
+    // Format datetime-local
+    function formatDateTimeLocal(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>
+
