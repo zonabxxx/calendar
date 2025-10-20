@@ -3,7 +3,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/google-style.html"
+      "destination": "/public/google-style.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
     }
   ]
 }
