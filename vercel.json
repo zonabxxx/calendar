@@ -6,22 +6,8 @@
       "destination": "/public/google-style.html"
     },
     {
-      "source": "/google-style.html",
-      "destination": "/public/google-style.html"
-    },
-    {
-      "source": "/index.html",
-      "destination": "/public/index.html"
-    },
-    {
-      "source": "/(.*\\.(html|css|js|svg|png|jpg|jpeg|gif))",
+      "source": "/(.*\\.(html|css|js|svg|png|jpg|jpeg|gif|ico))",
       "destination": "/public/$1"
     }
-  ],
-  "functions": {
-    "api/**/*.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  }
+  ]
 }
