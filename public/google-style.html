@@ -959,12 +959,166 @@
       background: #1a73e8;
       color: #fff;
     }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      /* Hide sidebar on mobile by default */
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 64px;
+        width: 280px;
+        height: calc(100vh - 64px);
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      }
+
+      .sidebar.mobile-open {
+        left: 0;
+      }
+
+      /* Header adjustments */
+      .header {
+        padding: 0 10px;
+      }
+
+      .header-left {
+        gap: 8px;
+      }
+
+      .logo span:last-child {
+        display: none; /* Hide "Kalendár" text on mobile */
+      }
+
+      .calendar-selector {
+        min-width: 120px;
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      /* Calendar controls */
+      .calendar-controls {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .view-controls {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .view-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .nav-controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .current-period {
+        font-size: 16px;
+        min-width: auto;
+      }
+
+      /* Calendar grid */
+      .calendar-grid-container {
+        padding: 10px;
+      }
+
+      .month-day {
+        min-height: 80px;
+        padding: 4px;
+        font-size: 11px;
+      }
+
+      .month-day-number {
+        font-size: 11px;
+      }
+
+      .month-event {
+        font-size: 10px;
+        padding: 1px 4px;
+      }
+
+      .weekday-header {
+        padding: 8px 4px;
+        font-size: 10px;
+      }
+
+      /* Chat adjustments for mobile */
+      .chat-window {
+        width: 100%;
+        height: 100%;
+        bottom: 0;
+        right: 0;
+        border-radius: 0;
+      }
+
+      .chat-fab {
+        bottom: 16px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+      }
+
+      /* Mini calendar in sidebar */
+      .mini-calendar-grid {
+        font-size: 10px;
+      }
+
+      .calendar-item {
+        font-size: 13px;
+        padding: 8px;
+      }
+
+      /* Add hamburger menu button */
+      .menu-btn {
+        display: flex !important;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 24px;
+        color: #5f6368;
+      }
+    }
+
+    /* Desktop - hide menu button */
+    .menu-btn {
+      display: none;
+    }
+
+    /* Overlay for mobile sidebar */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <!-- Header -->
   <div class="header">
     <div class="header-left">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="logo">
         <span>📅</span>
         <span>Kalendár</span>
@@ -980,8 +1134,11 @@
 
   <!-- Main Container -->
   <div class="main-container">
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <button class="create-btn" onclick="showCreateEventDialog()">
         <span style="font-size: 20px;">➕</span>
         <span>Vytvoriť</span>
@@ -1044,7 +1201,10 @@
   <div class="chat-window" id="chatWindow">
     <div class="chat-header">
       <div class="chat-title">🤖 AI Asistent</div>
-      <button class="chat-close-btn" onclick="toggleChat()">×</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="chat-close-btn" onclick="clearConversation()" title="Vymazať konverzáciu" style="font-size: 16px;">🗑️</button>
+        <button class="chat-close-btn" onclick="toggleChat()">×</button>
+      </div>
     </div>
     <div class="chat-messages" id="chatMessages">
       <div class="message assistant">
@@ -1085,11 +1245,36 @@
     let currentCalendarId = '';
     let currentDate = new Date();
     let viewMode = 'month';
-    const sessionId = 'session_' + Date.now();
+    let sessionId = 'session_' + Date.now();
     let visibleCalendars = new Set(); // Sledovanie viditeľných kalendárov
     let calendarColors = new Map(); // Sledovanie farieb kalendárov
 
     const skMonths = ['január', 'február', 'marec', 'apríl', 'máj', 'jún', 'júl', 'august', 'september', 'október', 'november', 'december'];
+
+    // Clear conversation and start fresh
+    function clearConversation() {
+      sessionId = 'session_' + Date.now();
+      const messagesDiv = document.getElementById('chatMessages');
+      messagesDiv.innerHTML = `
+        <div class="message assistant">
+          Ahoj! Som tvoj AI asistent. Môžem ti pomôcť s kalendárom:
+          <br><br>
+          • Vytvoriť udalosť<br>
+          • Zobraziť udalosti<br>
+          • Upraviť termíny<br>
+          • Plánovať zákazky
+        </div>
+      `;
+    }
+
+    // Toggle mobile sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('active');
+    }
 
     // Initialize
     async function init() {
@@ -1120,17 +1305,27 @@
           const endDateTime = allDay ? `${date}T23:59:59` : `${date}T${endTime}:00`;
           
           try {
-            const response = await fetch('/api/create-event', {
+            // Rozlíš CREATE vs UPDATE
+            const isUpdate = !!eventId;
+            const endpoint = isUpdate ? '/api/update-event' : '/api/create-event';
+            
+            const body = {
+              calendarId: calendarId,
+              summary: title,
+              description: description,
+              start: startDateTime,
+              end: endDateTime,
+              location: location
+            };
+            
+            if (isUpdate) {
+              body.eventId = eventId;
+            }
+            
+            const response = await fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                calendarId: calendarId,
-                summary: title,
-                description: description,
-                start: startDateTime,
-                end: endDateTime,
-                location: location
-              })
+              body: JSON.stringify(body)
             });
             
             const data = await response.json();
@@ -1139,13 +1334,16 @@
               closeEventModal();
               await loadEvents();
               render();
-              addChatMessage('assistant', `✅ Udalosť "${title}" bola vytvorená!`);
+              const message = isUpdate 
+                ? `✅ Udalosť "${title}" bola upravená!` 
+                : `✅ Udalosť "${title}" bola vytvorená!`;
+              addChatMessage('assistant', message);
             } else {
-              alert('Chyba: ' + (data.error || 'Nepodarilo sa vytvoriť udalosť'));
+              alert('Chyba: ' + (data.error || 'Nepodarilo sa uložiť udalosť'));
             }
           } catch (error) {
-            console.error('Error creating event:', error);
-            alert('Chyba pri vytváraní udalosti');
+            console.error('Error saving event:', error);
+            alert('Chyba pri ukladaní udalosti');
           }
         });
       }
@@ -2166,6 +2364,7 @@
 
     async function deleteEvent() {
       const eventId = document.getElementById('eventId').value;
+      const calendarId = document.getElementById('eventCalendar').value;
       
       if (!confirm('Naozaj chcete zmazať túto udalosť?')) {
         return;
@@ -2175,7 +2374,7 @@
         const response = await fetch(`/api/delete-event`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventId })
+          body: JSON.stringify({ eventId, calendarId })
         });
         
         const data = await response.json();

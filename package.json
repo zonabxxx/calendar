@@ -1,5 +1,5 @@
 {
-  "name": "calendar-mcp-server",
+  "name": "google-calendar-juraj",
   "version": "1.0.0",
   "description": "MCP Server for Google Calendar via Apps Script",
   "main": "index.js",

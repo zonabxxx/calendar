@@ -61,6 +61,21 @@ export default async function handler(req, res) {
     const currentData = await currentResponse.json();
     const forecastData = await forecastResponse.json();
     
+    // Check for API errors
+    if (currentData.cod && currentData.cod !== 200) {
+      return res.status(500).json({
+        ok: false,
+        error: `OpenWeatherMap API error: ${currentData.message || 'Unknown error'}`
+      });
+    }
+    
+    if (forecastData.cod && forecastData.cod !== '200') {
+      return res.status(500).json({
+        ok: false,
+        error: `OpenWeatherMap API error: ${forecastData.message || 'Unknown error'}`
+      });
+    }
+    
     // Parse current weather
     const current = {
       temperature: Math.round(currentData.main.temp),

@@ -1349,9 +1349,15 @@ app.get('/api/geolocation', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🌐 Web Server beží na http://localhost:${PORT}`);
-  console.log(`📅 Kalendár: ${GOOGLE_SCRIPT_URL ? '✅' : '❌'}`);
-  console.log(`🤖 OpenAI: ${process.env.OPENAI_API_KEY ? '✅' : '❌'}\n`);
-});
+// For Vercel serverless
+export default app;
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🌐 Web Server beží na http://localhost:${PORT}`);
+    console.log(`📅 Kalendár: ${GOOGLE_SCRIPT_URL ? '✅' : '❌'}`);
+    console.log(`🤖 OpenAI: ${process.env.OPENAI_API_KEY ? '✅' : '❌'}\n`);
+  });
+}
 
