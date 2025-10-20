@@ -6,7 +6,7 @@
       "destination": "/public/google-style.html"
     },
     {
-      "source": "/(.*\\.(html|css|js|svg|png|jpg|jpeg|gif|ico))",
+      "source": "/(.*)",
       "destination": "/public/$1"
     }
   ]
